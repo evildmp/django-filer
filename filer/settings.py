@@ -29,6 +29,7 @@ FILER_ADMIN_ICON_SIZES = (
 FILER_FILE_MODELS = getattr(settings, 'FILER_FILE_MODELS',
     (
         'filer.models.imagemodels.Image',
+        'filer.models.videomodels.Video',
         'filer.models.filemodels.File',
     )
 )

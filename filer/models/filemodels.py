@@ -194,6 +194,14 @@ class File(PolymorphicModel, mixins.IconsMixin):
         return text
 
     def get_admin_url_path(self):
+        print self._meta.app_label
+        print self._meta.module_name
+
+        print ">>>>", urlresolvers.reverse(
+            'admin:%s_%s_change' % (self._meta.app_label,
+                                    self._meta.module_name,),
+            args=(self.pk,)
+        )   
         return urlresolvers.reverse(
             'admin:%s_%s_change' % (self._meta.app_label,
                                     self._meta.module_name,),
