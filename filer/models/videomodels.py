@@ -7,7 +7,7 @@ from filer import settings as filer_settings
 from filer.models.filemodels import File
 from filer.utils.filer_easy_thumbnails import FilerThumbnailer
 import os, subprocess
-from settings import MEDIA_ROOT
+from settings import MEDIA_ROOT, MEDIA_URL
 try:
     import cPickle as pickle
 except:
@@ -31,7 +31,7 @@ ENCODERS = {
         "ffmpeg2theora": {
             "schema": ("options", "output", "input"),   # the schema is quite different from the one above
             "output": "--output",
-            "input": "",
+            # "input": "",
         },
     }
 
@@ -154,7 +154,7 @@ class Video(File):
       # doing for me was obscuring errors...
       # --Dave Butler <croepha@gmail.com>
       iext = os.path.splitext(iname)[1].lower()
-      return iext in ['.dv',]
+      return iext in ['.dv', '.wmv',]
 
     def save(self, *args, **kwargs):
         print "saving video"
@@ -167,79 +167,6 @@ class Video(File):
         # if not self.status: # probably no longer needed, since all videos should acquire the empty dict when created
         #     self.status = pickle.dumps({})
         super(Video, self).save(*args, **kwargs)
-
-    def _check_validity(self):
-        if not self.name:
-            return False
-        return True
-
-    def sidebar_image_ratio(self):
-        if self.width:
-            return float(self.width) / float(self.SIDEBAR_IMAGE_WIDTH)
-        else:
-            return 1.0
-
-    def has_edit_permission(self, request):
-        return self.has_generic_permission(request, 'edit')
-
-    def has_read_permission(self, request):
-        return self.has_generic_permission(request, 'read')
-
-    def has_add_children_permission(self, request):
-        return self.has_generic_permission(request, 'add_children')
-
-    def has_generic_permission(self, request, type):
-        """
-        Return true if the current user has permission on this
-        image. Return the string 'ALL' if the user has all rights.
-        """
-        user = request.user
-        if not user.is_authenticated() or not user.is_staff:
-            return False
-        elif user.is_superuser:
-            return True
-        elif user == self.owner:
-            return True
-        elif self.folder:
-            return self.folder.has_generic_permission(request, type)
-        else:
-            return False
-
-    @property
-    def label(self):
-        if self.name in ['', None]:
-            return self.original_filename or 'unnamed file'
-        else:
-            return self.name
-
-    @property
-    def width(self):
-        return self._width or 0
-
-    @property
-    def height(self):
-        return self._height or 0
-
-    @property
-    def thumbnails(self):
-        _thumbnails = {}
-        for name, opts in Image.DEFAULT_THUMBNAILS.items():
-            try:
-                opts.update({'subject_location': self.subject_location})
-                thumb = self.file.get_thumbnail(opts)
-                _thumbnails[name] = thumb.url
-            except:
-                # swallow the exception to avoid it bubbling up
-                # to the template {{ image.icons.48 }}
-                pass
-        return _thumbnails
-
-    @property
-    def easy_thumbnails_thumbnailer(self):
-        tn = FilerThumbnailer(file=self.file.file, name=self.file.name,
-                         source_storage=self.file.source_storage,
-                         thumbnail_storage=self.file.thumbnail_storage)
-        return tn
 
     def create_version(self, codec, size):
         # we're going to create an encoded version of our video, using <codec>, at <size>
@@ -257,30 +184,41 @@ class Video(File):
         command = [encoder]
         # check the output folder exists; create it if not
         if not os.path.exists(self.abs_directory_path()):
-            os.mkdir(self.abs_directory_path())
+            print ">>> the output folder doesn't exist:", self.abs_directory_path()
+            os.makedirs(self.abs_directory_path())
+            print ">>>taht worked!"
         # loop over the schema and assemble the command
         for item in schema:
             # input and output are special cases, because they take values that aren't determined by the schema
             if item == "input":
-                command.extend((ENCODERS[encoder]["input"], self.file.path))
+                input_prefix = ENCODERS[encoder].get("input")
+                if input_prefix:
+                    command.append(input_prefix)
+                command.append(self.file.path)
             elif item == "output":
-                command.extend((ENCODERS[encoder]["output"], self.outputpath(codec, size)))
+                output_prefix = ENCODERS[encoder].get("output")
+                if output_prefix:
+                    command.append(output_prefix)
+                command.append(self.outputpath(codec, size))
             else:
                 for option_prefix, option_value in codec_profile[item].items():
                     command.extend((option_prefix,str(option_value)))
 
-        try:
-            # mark it as "encoding", so nothing else tries to encode it while we're doing this
-            self.save_status(codec,size,"encoding") 
-            # now do the encoding and don't let anything after this happen until we finish executing command:
-            exit_status = subprocess.call(command) 
-            if exit_status == 0: # it's OK, so mark the version OK
-                self.save_status(codec,size,"OK")
-            else:
-                self.save_status(codec,size,"failed") # mark it as failed because the command returned an error
-        except Exception, e:
-            print " =================================== exception, ", e
-            self.save_status(codec,size,"failed") # mark it as failed because there was an exception
+        # mark it as "encoding", so nothing else tries to encode it while we're doing this
+        print ">>> mark as encoding"
+        self.save_status(codec,size,"encoding") 
+        # now do the encoding and don't let anything after this happen until we finish executing command:
+        print ">>> saved status"
+        print "command:", command
+        exit_status = subprocess.call(command) 
+        print ">>> exited from", command
+        if exit_status == 0: # it's OK, so mark the version OK
+            print ">>> saved OK"
+            self.save_status(codec,size,"OK")
+        else:
+            print ">>> save FAILED", exit_status
+
+            self.save_status(codec,size,"failed") # mark it as failed because the command returned an error
         # we should never return from here with the status still "encoding" - but that has happened - how?
         
     def codec_and_size(self, codec, size):
@@ -312,8 +250,8 @@ class Video(File):
     def url(self, codec, size):
         # the url for a particular version
         return os.path.join(MEDIA_URL, \
+            "rendered_video", \
             self.directory(), \
-            THUMBNAIL_SUBDIR, \
             "-".join((self.filename_without_extension(),
             self.codec_and_size(codec,size))) \
             + CODECS[codec]["extension"])
@@ -336,8 +274,8 @@ class Video(File):
         return os.path.splitext(self.filename())[0].lower() 
         
     def abs_directory_path(self):
-        # e.g. "/var/www/html/arkestra_medic/media/filer_private/2010/11/23/output"
-        return os.path.join(MEDIA_ROOT, self.directory(), THUMBNAIL_SUBDIR)
+        # e.g. "/var/www/html/arkestra_medic/media/filer_private/2010/11/23/output"        
+        return os.path.join(MEDIA_ROOT, "rendered_video", self.directory())
         
     def sizes(self):
         return SIZES
