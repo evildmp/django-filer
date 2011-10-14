@@ -17,7 +17,7 @@ class VideoAdmin(FileAdmin):
             'fields': ('name', 'owner','description')
         }),
         (None, {
-            'fields': ('is_public', 'encode_on_save','status')
+            'fields': ('is_public',)
             
         }),
         (_('Advanced'), {
