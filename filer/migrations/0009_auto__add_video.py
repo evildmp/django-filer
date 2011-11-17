@@ -10,7 +10,8 @@ class Migration(SchemaMigration):
         
         # Adding model 'Video'
         db.create_table('filer_video', (
-            ('file_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['filer.File'], unique=True, primary_key=True)),
+            ('file_ptr', orm['filer.Image:file_ptr']),
+            # ('file_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['filer.File'], unique=True, primary_key=True)), # this is what south created on its own - it doesn't work
         ))
         db.send_create_signal('filer', ['Video'])
 
