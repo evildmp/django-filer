@@ -71,10 +71,13 @@ class ClipboardAdmin(admin.ModelAdmin):
                                    'owner': request.user.pk},
                                   {'file': upload})
             if uploadform.is_valid():
+                print "upload form is valid"
                 file_obj = uploadform.save(commit=False)
                 # Enforce the FILER_IS_PUBLIC_DEFAULT
                 file_obj.is_public = filer_settings.FILER_IS_PUBLIC_DEFAULT
+                print "will save", file_obj
                 file_obj.save()
+                print "saved file"
                 clipboard_item = ClipboardItem(
                                     clipboard=clipboard, file=file_obj)
                 clipboard_item.save()
@@ -91,6 +94,7 @@ class ClipboardAdmin(admin.ModelAdmin):
                 ])
                 raise UploadException("AJAX request not valid: form invalid '%s'" % (form_errors,))
         except UploadException, e:
+            print e
             return HttpResponse(simplejson.dumps({'error': unicode(e)}), mimetype='application/json')
 
 

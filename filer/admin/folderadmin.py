@@ -273,7 +273,8 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
                 'has_add_children_permission': \
                                 folder.has_add_children_permission(request),
             }
-        except:
+        except Exception, e:
+            print e
             permissions = {}
         folder_files.sort()
         items = folder_children + folder_files

@@ -10,7 +10,8 @@ import os
 from settings import MEDIA_ROOT, MEDIA_URL
 try:
     import cPickle as pickle
-except:
+except Exception, e:
+    print e
     import pickle
 
 class Video(File):
@@ -25,6 +26,10 @@ class Video(File):
     }
     file_type = 'Video'
     _icon = "video"
+
+    def save(self, *args, **kwargs):
+        print "** saving", self
+        super(Video, self).save(*args, **kwargs)
 
     @classmethod
     def matches_file_type(cls, iname, ifile, request):

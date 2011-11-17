@@ -24,7 +24,8 @@ class FileImporter(object):
         """
         try:
             iext = os.path.splitext(file.name)[1].lower()
-        except:
+        except Exception, e:
+            print e
             iext = ''
         if iext in ['.jpg', '.jpeg', '.png', '.gif']:
             obj, created = Image.objects.get_or_create(

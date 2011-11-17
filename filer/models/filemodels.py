@@ -132,12 +132,17 @@ class File(PolymorphicModel, mixins.IconsMixin):
             # maybe this has a subclass, but is being saved as a File instance
             # anyway. do we need to go check all possible subclasses?
             pass
+            print "it's a file"
         elif issubclass(self.__class__, File):
+            print "subclass of file", self.__class__
             self._file_type_plugin_name = self.__class__.__name__
+            print "type is", self._file_type_plugin_name
         # cache the file size
         try:
             self._file_size = self.file.size
-        except:
+            print "self.file.size", self.file.size
+        except Exception, e:
+            print e
             pass
         if self._old_is_public != self.is_public and self.pk:
             self._move_file()
@@ -145,7 +150,9 @@ class File(PolymorphicModel, mixins.IconsMixin):
         try:
             self.generate_sha1()
         except Exception, e:
+            print e
             pass
+        print "about to hit super.save()"
         super(File, self).save(*args, **kwargs)
 
     @property
@@ -215,7 +222,8 @@ class File(PolymorphicModel, mixins.IconsMixin):
         """
         try:
             r = self.file.url
-        except:
+        except Exception, e:
+            print e
             r = ''
         return r
 
@@ -223,7 +231,8 @@ class File(PolymorphicModel, mixins.IconsMixin):
     def path(self):
         try:
             return self.file.path
-        except:
+        except Exception, e:
+            print e
             return ""
 
     @property

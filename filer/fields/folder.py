@@ -89,7 +89,8 @@ django.jQuery(document).ready(function(){
         try:
             key = self.rel.get_related_field().name
             obj = self.rel.to._default_manager.get(**{key: value})
-        except:
+        except Exception, e:
+            print e
             obj = None
         return obj
 

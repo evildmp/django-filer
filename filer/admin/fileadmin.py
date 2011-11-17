@@ -72,7 +72,8 @@ class FileAdmin(PrimitivePermissionAwareModelAdmin):
         try:
             obj = self.queryset(request).get(pk=unquote(object_id))
             parent_folder = obj.folder
-        except self.model.DoesNotExist:
+        except self.model.DoesNotExist, e:
+            print e
             obj = None
 
         r = super(FileAdmin, self).delete_view(

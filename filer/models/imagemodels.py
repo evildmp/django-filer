@@ -61,7 +61,8 @@ class Image(File):
                     self.date_taken = datetime(
                                        int(year), int(month), int(day),
                                        int(hour), int(minute), int(second))
-            except:
+            except Exception, e:
+                print e
                 pass
         if self.date_taken is None:
             self.date_taken = datetime.now()
@@ -70,7 +71,8 @@ class Image(File):
             # do this more efficient somehow?
             self.file.seek(0)
             self._width, self._height = PILImage.open(self.file).size
-        except Exception:
+        except Exception, e:
+            print e
             # probably the image is missing. nevermind.
             pass
         super(Image, self).save(*args, **kwargs)
@@ -151,6 +153,7 @@ class Image(File):
                 thumb = self.file.get_thumbnail(thumbnail_options)
                 _icons[size] = thumb.url
             except Exception, e:
+                print e
                 # swallow the the exception to avoid to bubble it up
                 # in the template {{ image.icons.48 }}
                 pass
@@ -164,7 +167,8 @@ class Image(File):
                 opts.update({'subject_location': self.subject_location})
                 thumb = self.file.get_thumbnail(opts)
                 _thumbnails[name] = thumb.url
-            except:
+            except Exception, e:
+                print e
                 # swallow the exception to avoid it bubbling up
                 # to the template {{ image.icons.48 }}
                 pass
