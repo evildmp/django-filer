@@ -39,7 +39,7 @@ class Video(File):
       # doing for me was obscuring errors...
       # --Dave Butler <croepha@gmail.com>
       iext = os.path.splitext(iname)[1].lower()
-      return iext in ['.dv', '.mov', '.avi', '.wmv',]
+      return iext in ['.dv', '.mov', '.mp4', '.avi', '.wmv',]
         
             
     def get_admin_url_path(self):
